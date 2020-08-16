@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.github.guang19.leaf.spring.autoconfig.LeafAutoConfiguration
