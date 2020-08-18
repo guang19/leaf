@@ -2,7 +2,6 @@ package com.github.guang19.leaf.core.snowflake.config;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
 
 /**
  * @author guang19
@@ -16,7 +15,7 @@ import java.time.LocalDateTime;
 public class SnowflakeIdGeneratorProperties
 {
     //leaf 开始时间，默认为当前项目启动的时间
-    private LocalDateTime startTime;
+    private Long startTimestamp;
 
     private SnowflakeZookeeperHolderProperties snowflakeZookeeperHolderProperties;
 }

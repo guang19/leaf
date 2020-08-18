@@ -19,10 +19,20 @@
 
     <groupId>com.github.guang19</groupId>
     <artifactId>leaf</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
 
     <name>leaf</name>
     <description>Distributed ID Generate Service</description>
+
+    <url>https://github.com/guang19/leaf</url>
+
+    <!--licenses-->
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <developers>
         <developer>
@@ -47,10 +57,33 @@
         </developer>
     </developers>
 
+    <!--发布的仓库地址-->
+    <distributionManagement>
+        <snapshotRepository>
+            <id>oss</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>oss</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <!--scm-->
+    <scm>
+        <url>https://github.com/guang19/leaf.git</url>
+        <connection>scm:https://github.com/guang19/leaf.git</connection>
+        <developerConnection>https://github.com/guang19</developerConnection>
+    </scm>
+
     <properties>
         <java.version>11</java.version>
+        <release-jdk.version>8</release-jdk.version>
         <curator.version>4.3.0</curator.version>
-        <maven.compiler.version>3.8.1</maven.compiler.version>
+        <maven-compiler.version>3.8.1</maven-compiler.version>
+        <maven-source.version>3.2.1</maven-source.version>
+        <maven-javadoc.version>3.0.1</maven-javadoc.version>
+        <maven-gpg.version>1.6</maven-gpg.version>
     </properties>
 
     <dependencyManagement>
@@ -101,9 +134,85 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler.version}</version>
+                <configuration>
+                    <source>${release-jdk.version}</source>
+                    <target>${release-jdk.version}</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <!--maven compiler-->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${maven-compiler.version}</version>
+                        <configuration>
+                            <source>${release-jdk.version}</source>
+                            <target>${release-jdk.version}</target>
+                            <encoding>UTF-8</encoding>
+                        </configuration>
+                    </plugin>
+
+                    <!--maven source-->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven-source.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!--java doc-->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven-javadoc.version}</version>
+                        <configuration>
+                            <failOnError>false</failOnError>
+                            <doclint>none</doclint>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!--gpg-->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven-gpg.version}</version>
+                        <executions>
+                            <execution>
+                                <id>oss</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

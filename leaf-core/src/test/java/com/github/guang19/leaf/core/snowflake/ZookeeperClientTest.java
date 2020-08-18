@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 /**
  * @author guang19
@@ -20,19 +21,19 @@ import java.time.LocalDateTime;
 public class ZookeeperClientTest
 {
     private CuratorFramework curator ;
+
     @Before
     public void before() throws Exception
     {
         RetryPolicy retryPolicy = new RetryUntilElapsed(1000,10);
         this.curator = CuratorFrameworkFactory.newClient("127.0.0.1:2181",10000,6000,retryPolicy);
         curator.start();
-
     }
 
     @Test
     public void test01() throws Exception
     {
-//        System.out.println(curator.create().forPath("/test"));
+        System.out.println(curator.create().forPath("/test"));
 //        curator.create().forPath("/test/test02","abc".getBytes(StandardCharsets.UTF_8));
 //        curator.delete().deletingChildrenIfNeeded().forPath("/test");
 //        curator.create().creatingParentContainersIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL).forPath("/test");

@@ -6,11 +6,9 @@ import com.github.guang19.leaf.core.snowflake.config.SnowflakeIdGeneratorPropert
 import com.github.guang19.leaf.core.snowflake.config.SnowflakeZookeeperHolderProperties;
 import org.junit.Test;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author guang19
@@ -23,10 +21,9 @@ public class SnowflakeIdGeneratorTest
     public void test01() throws Exception
     {
         SnowflakeZookeeperHolderProperties zookeeperHolderProperties = new
-                SnowflakeZookeeperHolderProperties("127.0.0.1",2181,"userservice","/home/guang19/tmp");
+                SnowflakeZookeeperHolderProperties(2181,"userservice","127.0.0.1","/home/guang19/tmp");
 
-        SnowflakeIdGeneratorProperties idGeneratorProperties = new SnowflakeIdGeneratorProperties(
-                LocalDateTime.of(2000,1,1,1,1),zookeeperHolderProperties);
+        SnowflakeIdGeneratorProperties idGeneratorProperties = new SnowflakeIdGeneratorProperties(1577811660000L,zookeeperHolderProperties);
 
         IdGenerator idGenerator = new SnowflakeIdGenerator(idGeneratorProperties);
 
@@ -42,14 +39,36 @@ public class SnowflakeIdGeneratorTest
     @Test
     public void test02() throws Exception
     {
-        System.out.println(LocalDateTime.of(1969,3,1,1,1).toInstant(ZoneOffset.of("+8")).toEpochMilli());
+        System.out.println(LocalDateTime.of(2020,1,1,1,1).toInstant(ZoneOffset.of("+8")).toEpochMilli());
 
         //2730227261100785664
         //6679516701194715136
         //6811788475881226240
+        //83157078750789632
 
         //9223372036854775807
         System.out.println(Long.MAX_VALUE);
 
+        System.out.println(LocalDateTime.ofInstant(Instant.ofEpochMilli(1288834974657L),ZoneId.systemDefault()));
+
+        //1597654127362 = 2020-08-17 16:48:47.362
+        System.out.println(LocalDateTime.ofInstant(Instant.ofEpochMilli(1597654127362L),ZoneId.systemDefault()));
+    }
+
+    @Test
+    public void test03() throws Exception
+    {
+        //9223372036854775807
+        //140737488355327
+        System.out.println(5 << 1);
+        System.out.println(Long.MAX_VALUE);
+
+        TimeUnit.NANOSECONDS.sleep(TimeUnit.SECONDS.toNanos(3));
+//        System.out.println();
+    }
+
+    @Test
+    public void test04() throws Exception
+    {
     }
 }

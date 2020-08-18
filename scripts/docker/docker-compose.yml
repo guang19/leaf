@@ -1,0 +1,27 @@
+version: "3.6"
+
+services:
+  leaf-server:
+    image: leaf-server:1.0.2
+    container_name: "leaf-server"
+    ports:
+      - "13140:13140"
+    volumes:
+      - "/etc/localtime:/etc/localtime"  #同步宿主机时间
+    depends_on:
+      - "leaf-zookeeper"
+    links:
+      - "leaf-zookeeper"
+
+  leaf-zookeeper:
+    image: zookeeper:3.6
+    container_name: "leaf-zookeeper"
+    hostname: "leaf-zookeeper"
+    ports:
+      - "2181:2181"
+    volumes:
+      - "/etc/localtime:/etc/localtime"  #同步宿主机时间
+    environment:
+      - "JVMFLAGS=-Xmx512m"
+      - "ZOO_MY_ID=1"
+      - "ZOO_SERVERS=server.1=leaf-zookeeper:2888:3888;2181"

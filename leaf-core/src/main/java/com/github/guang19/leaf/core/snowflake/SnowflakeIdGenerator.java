@@ -4,17 +4,20 @@ import com.github.guang19.leaf.core.common.Result;
 import com.github.guang19.leaf.core.snowflake.config.SnowflakeIdGeneratorProperties;
 import com.github.guang19.leaf.core.utils.IpUtils;
 import com.google.common.base.Preconditions;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Clock;
-import java.time.OffsetTime;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+
 
 /**
- * @author guang19  , meituan leaf
+ * @author   meituan leaf , guang19
  * @date 2020/8/16
  * @description  SnowflakeIdGenerator
  */
 @Slf4j
+@Getter
 public class SnowflakeIdGenerator extends AbstractSnowflakeIdGenerator
 {
 
@@ -37,6 +40,8 @@ public class SnowflakeIdGenerator extends AbstractSnowflakeIdGenerator
     //时间戳偏移量： 时间戳位于工作机器ID的左边，所以 (序列号 + 工作机器ID) = 时间戳偏移量
     private final long TIMESTAMP_LEFT_SHIFT = SEQUENCE_BIT + WORKERID_BIT;
 
+    private final long MAX_MOVED_BACK_OFFSET = 3;
+
     //当前工作机器的ID
     private long workerId;
     private long sequence = 0L;
@@ -48,7 +53,7 @@ public class SnowflakeIdGenerator extends AbstractSnowflakeIdGenerator
      */
     public SnowflakeIdGenerator(SnowflakeIdGeneratorProperties idGeneratorProperties)
     {
-        this.startTimestamp = idGeneratorProperties.getStartTime().toInstant(OffsetTime.now(Clock.systemDefaultZone()).getOffset()).toEpochMilli();
+        this.startTimestamp = idGeneratorProperties.getStartTimestamp();
         Preconditions.checkArgument(getCurrentTmp() >= startTimestamp, "start time must lte to current time !");
         //获取当前服务器的某个网卡的IP
         final String ip = IpUtils.getIp();
@@ -89,30 +94,24 @@ public class SnowflakeIdGenerator extends AbstractSnowflakeIdGenerator
         if (curTmp < lastTimestamp)
         {
             long offset = lastTimestamp - curTmp;
-            if (offset <= 5)
+            //如果回拨小于等于3ms，尚且在可接受的范围之内，就等其一倍的时间
+            if (offset <= MAX_MOVED_BACK_OFFSET)
             {
-                try
+                LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(MAX_MOVED_BACK_OFFSET << 1));
+                curTmp = getCurrentTmp();
+                if (curTmp < lastTimestamp)
                 {
-                    wait(offset << 1);
-                    curTmp = getCurrentTmp();
-                    if (curTmp < lastTimestamp)
-                    {
-                        return Result.systemClockGoBack();
-                    }
-                }
-                catch (InterruptedException e)
-                {
-                    log.error("System clock go back so that wait interrupted !");
                     return Result.systemClockGoBack();
                 }
             }
             else
             {
+                //回拨步长太大，直接返回错误结果
                 return Result.systemClockGoBack();
             }
         }
         //相同时间内，就自增序列
-        if (lastTimestamp == curTmp)
+        else if (lastTimestamp == curTmp)
         {
             sequence = (sequence + 1) & MAX_SEQUENCE;
             //当前毫秒内的序列已达到最大
@@ -136,5 +135,11 @@ public class SnowflakeIdGenerator extends AbstractSnowflakeIdGenerator
     public long getWorkerId()
     {
         return workerId;
+    }
+
+    //获取开始时间
+    public long getStartTimestamp()
+    {
+        return this.startTimestamp;
     }
 }

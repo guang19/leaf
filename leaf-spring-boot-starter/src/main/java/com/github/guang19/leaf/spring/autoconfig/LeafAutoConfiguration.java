@@ -12,10 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 
 /**
  * @author guang19
@@ -30,17 +27,18 @@ public class LeafAutoConfiguration
 
     @Bean
     @ConditionalOnProperty(prefix = "spring.leaf.snowflake" ,value = "enable" , havingValue = "true")
-    public SnowflakeIdGenerator snowflakeIdGenerator(@Autowired LeafSnowflakeIdGeneratorProperties leafSnowflakeIdGeneratorProperties,
-                                                     @Autowired Environment env)
+    public SnowflakeIdGeneratorProperties snowflakeIdGeneratorProperties(@Autowired LeafSnowflakeIdGeneratorProperties leafSnowflakeIdGeneratorProperties,
+                                                                         @Autowired Environment env)
     {
         SnowflakeIdGeneratorProperties snowflakeIdGeneratorProperties = new SnowflakeIdGeneratorProperties();
         if (leafSnowflakeIdGeneratorProperties.getStartTimestamp() == null)
         {
-            snowflakeIdGeneratorProperties.setStartTime(LocalDateTime.now(Clock.systemDefaultZone()));
+            //默认使用本地当前时间
+            snowflakeIdGeneratorProperties.setStartTimestamp(LocalDateTime.now(Clock.systemDefaultZone()).toInstant(OffsetDateTime.now(Clock.systemDefaultZone()).getOffset()).toEpochMilli());
         }
         else
         {
-            snowflakeIdGeneratorProperties.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(leafSnowflakeIdGeneratorProperties.getStartTimestamp()), ZoneId.systemDefault()));
+            snowflakeIdGeneratorProperties.setStartTimestamp(leafSnowflakeIdGeneratorProperties.getStartTimestamp());
         }
         SnowflakeZookeeperHolderProperties snowflakeZookeeperHolderProperties = new SnowflakeZookeeperHolderProperties();
         if (leafSnowflakeIdGeneratorProperties.getZkConnectionString() == null)
@@ -48,11 +46,18 @@ public class LeafAutoConfiguration
             throw new RuntimeException("The property of snowflakeIdGenerator [connection string] must be configured");
         }
         snowflakeZookeeperHolderProperties.setZkConnectionString(leafSnowflakeIdGeneratorProperties.getZkConnectionString());
-        if (leafSnowflakeIdGeneratorProperties.getZkPort() == null)
+        if (leafSnowflakeIdGeneratorProperties.getServicePort() != null)
         {
-            throw new RuntimeException("The property of snowflakeIdGenerator [port] must be configured");
+            snowflakeZookeeperHolderProperties.setServicePort(leafSnowflakeIdGeneratorProperties.getServicePort());
         }
-        snowflakeZookeeperHolderProperties.setZkPort(leafSnowflakeIdGeneratorProperties.getZkPort());
+        else if (env.getProperty("server.port") != null)
+        {
+            snowflakeZookeeperHolderProperties.setServicePort(Integer.parseInt(env.getProperty("server.port")));
+        }
+        else
+        {
+            throw new RuntimeException("The property of snowflakeIdGenerator [service port] must be configured");
+        }
         if (leafSnowflakeIdGeneratorProperties.getLocalNodeCacheDir() == null)
         {
             snowflakeZookeeperHolderProperties.setLocalNodeCacheDir(System.getProperty("java.io.tmpdir"));
@@ -74,6 +79,14 @@ public class LeafAutoConfiguration
             throw new RuntimeException("The property of snowflakeIdGenerator [service name] must be configured");
         }
         snowflakeIdGeneratorProperties.setSnowflakeZookeeperHolderProperties(snowflakeZookeeperHolderProperties);
+        return snowflakeIdGeneratorProperties;
+    }
+
+    @Bean
+    @ConditionalOnBean(SnowflakeIdGeneratorProperties.class)
+    @ConditionalOnProperty(prefix = "spring.leaf.snowflake" ,value = "enable" , havingValue = "true")
+    public SnowflakeIdGenerator snowflakeIdGenerator(@Autowired SnowflakeIdGeneratorProperties snowflakeIdGeneratorProperties)
+    {
         return new SnowflakeIdGenerator(snowflakeIdGeneratorProperties);
     }
 }

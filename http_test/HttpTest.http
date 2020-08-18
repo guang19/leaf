@@ -1,4 +1,6 @@
-GET http://localhost:8080/api/leaf/snowflake_id
+GET http://localhost:13140/api/leaf/snowflake_id
 
 
 ###
+
+GET http://localhost:13140/api/decode/snowflakeId?snowflakeId=83595896444420096
